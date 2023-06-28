@@ -2,7 +2,7 @@
 
 **MERN STACK**
 
-- Front ent made with react using a sci-fi theme UI framework arwes
+- Front end made with react using a sci-fi theme UI framework arwes
 - REST API made whit NODE , using express framework
 
 ###Install
