@@ -11,7 +11,7 @@ const app = express();
 // middlewares for all the routes
 
 // allow cors request sites
-app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors({ origin: 'http://localhost:8000' }));
 app.use(morgan('combined'));
 
 app.use(express.json());

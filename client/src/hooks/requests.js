@@ -1,5 +1,5 @@
 const BASE_PATH = 'http://localhost:';
-const PORT = 5000;
+const PORT = 8000;
 const ROUTES = {
   PLANETS: '/planets',
   LAUNCHES: '/launches',
