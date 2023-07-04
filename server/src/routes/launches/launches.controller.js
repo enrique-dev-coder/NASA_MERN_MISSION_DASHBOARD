@@ -4,10 +4,15 @@ const {
   abortLaunchById,
 } = require('../../models/launches.model.js');
 
+const { getPagination } = require('../../services/query.js');
+
 async function httpGetAllLaunches(req, res) {
+  // aqui vienen los params de la query http://localhost:8000/v1/launches?page=2&limit=50 todo lo que venga despues de ? y lo parsea como  {page: '2',limit:"50" }
+  // esta funcion regresa un objeto
+  const { skip, limit } = getPagination(req.query);
   // debido a que un map no esta en json solo se mandan llamar sus valores
   // y con el array from se hace un array con los valores de ese map osea un array de objetos
-  return res.status(200).json(await getAllLaunches());
+  return res.status(200).json(await getAllLaunches(skip, limit));
 }
 
 function httpPostNewLaunch(req, res) {

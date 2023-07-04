@@ -22,7 +22,7 @@ const launchesSchema = new mongoose.Schema({
   // entocnes esa logica se hace en el modelo
   destination: {
     type: String,
-    required: true,
+    required: false,
   },
   customers: [String],
   upcoming: {

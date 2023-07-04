@@ -1,29 +1,74 @@
+const axios = require('axios');
 const launches = require('./launches.mongo.js');
 const planets = require('./planets.mongo.js');
 
 const DEFAULT_FLIGHT_NUMBER = 100;
+const SPACEX_API_URL = 'https://api.spacexdata.com/v4/launches/query';
 
-const launch = {
-  flightNumber: 100,
-  mission: 'Kepler Exploration X',
-  rocket: 'Explorer IS1',
-  launchDate: new Date('December 27,2030'),
-  destination: 'Kepler-442 b',
-  customers: ['ZTM', 'NASA'],
-  upcoming: true,
-  success: true,
-};
+// cargar data desde la api de spaceX
+// se usara axios como libreria para hacer request en node
 
-// la funcion ya manda una promesa que usamos para guardar ese ejemplo como el priemr caso
-saveLaunch(launch);
+async function loadSpacexLaunchData(options = {}) {
+  // segun la doc de la api se usa un post para queries mas avanzadas
+  const { pagination = true } = options;
+
+  const response = await axios.post(SPACEX_API_URL, {
+    query: {},
+    options: {
+      pagination: pagination,
+      populate: [
+        {
+          path: 'rocket',
+          select: {
+            name: 1,
+          },
+        },
+        {
+          path: 'payloads',
+          select: {
+            customers: 1,
+          },
+        },
+      ],
+    },
+  });
+  const launchDocs = response.data?.docs;
+
+  return launchDocs;
+}
+
+// aqui podemos salvar toda la data a la base de datos(pagination false) o ir slavando pagina por pagina requerida por el usuario
+// que eventualmente seria lo mismo para el caso metimos todos los datos a nuestra base de datos en mongo
+async function loadSpacexLaunchDataToOurDB() {
+  const launchDocs = await loadSpacexLaunchData({ pagination: false });
+  const launchDocsMapped = launchDocs.map((launch) => {
+    return {
+      flightNumber: launch.flight_number,
+      mission: launch.name,
+      rocket: launch.rocket.name,
+      launchDate: launch.date_local,
+      upcoming: launch.upcoming,
+      success: launch.success,
+      // aqui usamos el trukzo del flat map para que un array de arrays [[Array]] se haga un [Array] de un solo nivel
+      customers: launch.payloads.flatMap((item) => item.customers),
+    };
+  });
+
+  launchDocsMapped.map(async (launch) => await saveLaunch(launch));
+}
 
 // en  un Map se usa ese metodo para verificar si estiste
 async function existsLaunchWithId(launchId) {
   return await launches.findOne({ flightNumber: launchId });
 }
 
-async function getAllLaunches() {
-  return await launches.find({}, { _id: 0, __v: 0 });
+async function getAllLaunches(skip, limit) {
+  return await launches
+    .find({}, { _id: 0, __v: 0 })
+    // sortear por flightnumber ascendente
+    .sort({ flightNumber: 1 })
+    .skip(skip)
+    .limit(limit);
 }
 
 async function getLatestFlightNumber() {
@@ -55,11 +100,6 @@ async function saveLaunch(launch) {
 
   //solucion usando solo el planeta como objeto solo se revisa si sale un objeto, si no se manda un error
 
-  const planet = await planets.findOne({ keplerName: launch.destination });
-  if (!planet) {
-    // buenas practicas para sacar errores
-    throw new Error('No destination planet found');
-  }
   await launches.updateOne(
     {
       flightNumber: launch.flightNumber,
@@ -71,6 +111,11 @@ async function saveLaunch(launch) {
 
 async function scheduleNewLaunch(launch) {
   try {
+    const planet = await planets.findOne({ keplerName: launch.destination });
+    if (!planet) {
+      // buenas practicas para sacar errores
+      throw new Error('No destination planet found');
+    }
     const newLaunch = {
       ...launch,
       success: true,
@@ -104,13 +149,11 @@ async function abortLaunchById(launchId) {
 
   return launchToBeAborted;
 }
+
 module.exports = {
+  loadSpacexLaunchDataToOurDB,
   existsLaunchWithId,
   getAllLaunches,
   addNewLaunch,
   abortLaunchById,
 };
-
-// un map te deja asociar un valor a cualquier otro valor por ejemplo { ()=>{}:""}
-// tambien tienen un feature que hace que se preserve el orden en que se van insertando los valores a diferencia de un objeot normal de js
-// launches.set(launch.flightNumber,launch) esto quiere decir que andamos creando un nuevo objeto como {100: launch}

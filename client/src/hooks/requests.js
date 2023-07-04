@@ -1,8 +1,8 @@
 const BASE_PATH = 'http://localhost:';
 const PORT = 8000;
 const ROUTES = {
-  PLANETS: '/planets',
-  LAUNCHES: '/launches',
+  PLANETS: '/v1/planets',
+  LAUNCHES: '/v1/launches',
 };
 
 // Load planets and return as JSON.

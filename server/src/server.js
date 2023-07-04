@@ -1,11 +1,12 @@
-// usar variables de entorno
+// usar variables de entorno del .env
 require('dotenv').config();
 ////////////////////////////
-
 const http = require('http');
 const app = require('./app');
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT;
+
 const { loadPlanetsData } = require('./models/planets.model.js');
+const { loadSpacexLaunchDataToOurDB } = require('./models/launches.model.js');
 const { connectToMongoDB } = require('./services/mongo.js');
 
 // this is to separate express code like middlewares form the file of the server
@@ -18,6 +19,8 @@ const server = http.createServer(app);
 async function startServer() {
   await connectToMongoDB();
   await loadPlanetsData();
+  await loadSpacexLaunchDataToOurDB();
+
   server.listen(PORT, () => {
     console.log(`Listening on port: ${PORT}`);
   });
