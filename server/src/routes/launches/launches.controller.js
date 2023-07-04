@@ -1,14 +1,13 @@
 const {
   getAllLaunches,
   addNewLaunch,
-  existsLaunchWithId,
   abortLaunchById,
 } = require('../../models/launches.model.js');
 
-function httpGetAllLaunches(req, res) {
+async function httpGetAllLaunches(req, res) {
   // debido a que un map no esta en json solo se mandan llamar sus valores
   // y con el array from se hace un array con los valores de ese map osea un array de objetos
-  return res.status(200).json(getAllLaunches());
+  return res.status(200).json(await getAllLaunches());
 }
 
 function httpPostNewLaunch(req, res) {
@@ -35,16 +34,10 @@ function httpPostNewLaunch(req, res) {
   return res.status(201).json(launch);
 }
 
-function httpAbortLaunch(req, res) {
+async function httpAbortLaunch(req, res) {
   // get the params of a req url
   const launchId = Number(req.params.id);
-  if (!existsLaunchWithId(launchId)) {
-    // if launch doesnt exist
-    return res.status(400).json({
-      error: 'Launch does not exist',
-    });
-  }
-  const aborted = abortLaunchById(launchId);
+  const aborted = await abortLaunchById(launchId);
   // if launch does exist
   return res.status(200).json(aborted);
 }

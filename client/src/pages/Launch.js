@@ -7,8 +7,8 @@ const Launch = (props) => {
     const planets = props?.planets;
 
     return planets?.map((planet) => (
-      <option value={planet.kepler_name} key={planet.kepler_name}>
-        {planet.kepler_name}
+      <option value={planet.keplerName} key={planet.keplerName}>
+        {planet.keplerName}
       </option>
     ));
   }, [props?.planets]);

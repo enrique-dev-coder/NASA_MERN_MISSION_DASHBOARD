@@ -3,7 +3,7 @@ const { parse } = require('csv-parse');
 const path = require('path');
 const fs = require('fs');
 
-const habitablePlanets = [];
+const planets = require('./planets.mongo.js');
 
 function isHabitablePlanet(planet) {
   return (
@@ -27,7 +27,7 @@ function loadPlanetsData() {
       )
       .on('data', (data) => {
         if (isHabitablePlanet(data)) {
-          habitablePlanets.push(data);
+          savePlanet(data);
         }
       })
       .on('error', (err) => {
@@ -40,9 +40,35 @@ function loadPlanetsData() {
   });
 }
 
-function getAllPlanets() {
-  return habitablePlanets;
+async function getAllPlanets() {
+  // {} todos los datos son regresados
+  // el segundo argumento es para ver que campos son incluidos en la respuesta el :0 es para excluir
+  // mas info en la doc de mongoose
+  return await planets.find({}, { __v: 0, _id: 0 });
 }
+
+async function savePlanet(data) {
+  // guardar el pnaeta en el modelo de mongodb,
+  // para qeu no guarde varias veces los 8 planets por la logica de la funcion se usa una upsert operation
+  // await planets.create({ keplerName: data.kepler_name });
+  // esta funcion de mongoose es para que se busquen los planetas y si ya existen que NO se vuelvan a acrear
+  try {
+    await planets.updateOne(
+      {
+        keplerName: data.kepler_name,
+      },
+      {
+        keplerName: data.kepler_name,
+      },
+      {
+        upsert: true,
+      }
+    );
+  } catch (error) {
+    console.log(`Could not save ${error}`);
+  }
+}
+
 module.exports = {
   loadPlanetsData,
   getAllPlanets,
